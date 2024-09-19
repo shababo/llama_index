@@ -76,8 +76,8 @@ def generate_anthropic_multi_modal_chat_message(
     for image_document in image_documents:
         image_content: Dict[str, Any] = {}
         if image_document.image_path and image_document.image_path != "":
-            mimetype = infer_image_mimetype_from_file_path(image_document.image_path)
-            base64_image = encode_image(image_document.image_path)
+            base64_image = encode_image(image_document.metadata["file_path"])
+            mimetype = infer_image_mimetype_from_base64(base64_image)
             image_content = {
                 "type": "image",
                 "source": {
@@ -90,10 +90,8 @@ def generate_anthropic_multi_modal_chat_message(
             "file_path" in image_document.metadata
             and image_document.metadata["file_path"] != ""
         ):
-            mimetype = infer_image_mimetype_from_file_path(
-                image_document.metadata["file_path"]
-            )
             base64_image = encode_image(image_document.metadata["file_path"])
+            mimetype = infer_image_mimetype_from_base64(base64_image)
             image_content = {
                 "type": "image",
                 "source": {
@@ -103,15 +101,16 @@ def generate_anthropic_multi_modal_chat_message(
                 },
             }
         elif image_document.image_url and image_document.image_url != "":
-            mimetype = infer_image_mimetype_from_file_path(image_document.image_url)
+            base64_image = base64.b64encode(
+                httpx.get(image_document.image_url).content
+            ).decode("utf-8")
+            mimetype = infer_image_mimetype_from_base64(base64_image)
             image_content = {
                 "type": "image",
                 "source": {
                     "type": "base64",
                     "media_type": mimetype,
-                    "data": base64.b64encode(
-                        httpx.get(image_document.image_url).content
-                    ).decode("utf-8"),
+                    "data": ,
                 },
             }
         elif image_document.image != "":
